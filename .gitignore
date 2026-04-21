@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.env
+
+# GCP credentials — NE JAMAIS committer !
+*.json
+service-account*.json
+
+# IDE
+.vscode/
+.idea/

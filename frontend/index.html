@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini API Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap');
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c28;
+      --accent: #7c6aff;
+      --accent2: #ff6a9b;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --success: #4ade80;
+      --error: #f87171;
+      --border: rgba(124, 106, 255, 0.2);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    /* ── Grain overlay ─────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999;
+    }
+
+    header {
+      max-width: 900px;
+      margin: 0 auto 3rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 1.2rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 800; }
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .status-dot {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.75rem; color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card.full { grid-column: 1 / -1; }
+
+    .card-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+
+    .method {
+      background: rgba(124, 106, 255, 0.15);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.6rem;
+    }
+
+    .method.post { background: rgba(255, 106, 155, 0.15); color: var(--accent2); }
+
+    .card h2 {
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Output box ─────────────────────────────────────── */
+    .output {
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      min-height: 80px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+      transition: color 0.3s;
+    }
+
+    .output.loaded { color: var(--text); }
+    .output.err { color: var(--error); }
+
+    /* ── Poem box ───────────────────────────────────────── */
+    .poem-output {
+      background: linear-gradient(135deg, rgba(124,106,255,0.08), rgba(255,106,155,0.08));
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem 1.5rem;
+      font-size: 0.9rem;
+      line-height: 1.9;
+      color: var(--text);
+      min-height: 100px;
+      white-space: pre-wrap;
+      font-style: italic;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 8px;
+      border: none; cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem; font-weight: 700;
+      transition: all 0.15s;
+      margin-top: 0.75rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #9d8fff;
+      box-shadow: 0 4px 20px rgba(124,106,255,0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-pink {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+    }
+
+    .btn-pink:hover {
+      box-shadow: 0 4px 24px rgba(255,106,155,0.4);
+      filter: brightness(1.1);
+    }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Form inputs ────────────────────────────────────── */
+    .form-group { margin-bottom: 0.75rem; }
+
+    label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      margin-bottom: 0.3rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ── Entries table ──────────────────────────────────── */
+    .entries-list {
+      display: flex; flex-direction: column; gap: 0.5rem;
+      max-height: 220px; overflow-y: auto;
+    }
+
+    .entry-item {
+      background: var(--surface2);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .entry-item strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── API URL config ─────────────────────────────────── */
+    .config-bar {
+      max-width: 900px;
+      margin: 0 auto 1.5rem;
+      display: flex; gap: 0.75rem; align-items: center;
+    }
+
+    .config-bar input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+    }
+
+    .config-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      white-space: nowrap;
+    }
+
+    .tag-count {
+      display: inline-block;
+      background: rgba(124,106,255,0.15);
+      color: var(--accent);
+      border-radius: 20px;
+      padding: 1px 8px;
+      font-size: 0.65rem;
+      font-family: 'Space Mono', monospace;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">API</div>
+  <div>
+    <h1>Mini API <span>Dashboard</span></h1>
+    <div class="subtitle">Flask · GCS · Vertex AI · Cloud Run</div>
+  </div>
+  <div class="status-dot">
+    <div class="dot"></div>
+    <span id="server-time">--:--:--</span>
+  </div>
+</header>
+
+<!-- Configuration de l'URL de l'API -->
+<div class="config-bar">
+  <span class="config-label">API URL →</span>
+  <input type="text" id="api-url" value="http://localhost:8080" placeholder="https://votre-api.run.app" />
+  <button class="btn btn-secondary" onclick="pingStatus()">Tester</button>
+</div>
+
+<div class="grid">
+
+  <!-- /hello -->
+  <div class="card">
+    <div class="card-tag"><span class="method">GET</span>/hello</div>
+    <h2>Message de bienvenue</h2>
+    <div class="output" id="hello-output">Cliquez pour appeler l'endpoint...</div>
+    <button class="btn btn-secondary" onclick="callHello()">Appeler /hello</button>
+  </div>
+
+  <!-- /status -->
+  <div class="card">
+    <div class="card-tag"><span class="method">GET</span>/status</div>
+    <h2>Statut du serveur</h2>
+    <div class="output" id="status-output">Cliquez pour voir l'heure serveur...</div>
+    <button class="btn btn-secondary" onclick="callStatus()">Appeler /status</button>
+  </div>
+
+  <!-- /data GET -->
+  <div class="card">
+    <div class="card-tag"><span class="method">GET</span>/data</div>
+    <h2>Lire les données GCS <span class="tag-count" id="entry-count">0</span></h2>
+    <div class="entries-list" id="data-list">
+      <div class="output">Cliquez pour charger les données depuis GCS...</div>
+    </div>
+    <button class="btn btn-primary" onclick="callGetData()">Charger les données</button>
+  </div>
+
+  <!-- /data POST -->
+  <div class="card">
+    <div class="card-tag"><span class="method post">POST</span>/data</div>
+    <h2>Ajouter une entrée</h2>
+    <div class="form-group">
+      <label>Nom</label>
+      <input type="text" id="field-name" placeholder="ex: Alice" />
+    </div>
+    <div class="form-group">
+      <label>Message</label>
+      <input type="text" id="field-message" placeholder="ex: Hello depuis le frontend !" />
+    </div>
+    <div class="output" id="post-output" style="margin-top:0.75rem; min-height:50px;">Résultat ici...</div>
+    <button class="btn btn-primary" onclick="callPostData()">Envoyer</button>
+  </div>
+
+  <!-- /poem -->
+  <div class="card full">
+    <div class="card-tag"><span class="method">GET</span>/poem</div>
+    <h2>Générer un poème avec Vertex AI ✨</h2>
+    <div class="form-group" style="max-width:400px">
+      <label>Thème du poème</label>
+      <input type="text" id="poem-theme" value="la nature et le code informatique" placeholder="ex: le cloud et les étoiles" />
+    </div>
+    <div class="poem-output" id="poem-output">Votre poème apparaîtra ici...</div>
+    <button class="btn btn-pink" onclick="callPoem()">Générer un poème 🎭</button>
+  </div>
+
+</div>
+
+<script>
+  const getUrl = () => document.getElementById('api-url').value.replace(/\/$/, '');
+
+  function setOutput(id, text, state = 'loaded') {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = `output ${state}`;
+  }
+
+  // ── /hello ───────────────────────────────────────────────────
+  async function callHello() {
+    setOutput('hello-output', '⏳ Chargement...', '');
+    try {
+      const res = await fetch(`${getUrl()}/hello`);
+      const data = await res.json();
+      setOutput('hello-output', JSON.stringify(data, null, 2));
+    } catch(e) {
+      setOutput('hello-output', `Erreur : ${e.message}\n\nVérifiez l'URL de l'API et que CORS est activé.`, 'err');
+    }
+  }
+
+  // ── /status ──────────────────────────────────────────────────
+  async function callStatus() {
+    setOutput('status-output', '⏳ Chargement...', '');
+    try {
+      const res = await fetch(`${getUrl()}/status`);
+      const data = await res.json();
+      setOutput('status-output', JSON.stringify(data, null, 2));
+    } catch(e) {
+      setOutput('status-output', `Erreur : ${e.message}`, 'err');
+    }
+  }
+
+  async function pingStatus() {
+    try {
+      const res = await fetch(`${getUrl()}/status`);
+      const data = await res.json();
+      document.getElementById('server-time').textContent = data.server_time_utc?.slice(11,19) || 'ok';
+    } catch(e) { document.getElementById('server-time').textContent = 'erreur'; }
+  }
+
+  // ── GET /data ─────────────────────────────────────────────────
+  async function callGetData() {
+    const list = document.getElementById('data-list');
+    list.innerHTML = '<div class="output">⏳ Chargement depuis GCS...</div>';
+    try {
+      const res = await fetch(`${getUrl()}/data`);
+      const data = await res.json();
+      document.getElementById('entry-count').textContent = data.count ?? 0;
+
+      if (!data.entries || data.entries.length === 0) {
+        list.innerHTML = '<div class="output loaded">Aucune entrée pour l\'instant. Ajoutez-en une !</div>';
+        return;
+      }
+      list.innerHTML = data.entries.map(e => `
+        <div class="entry-item">
+          <strong>${e.name || '(sans nom)'}</strong>
+          ${e.message || ''} <br/>
+          <span style="font-size:0.6rem;opacity:0.5">${e.created_at || ''}</span>
+        </div>
+      `).join('');
+    } catch(e) {
+      list.innerHTML = `<div class="output err">Erreur : ${e.message}</div>`;
+    }
+  }
+
+  // ── POST /data ────────────────────────────────────────────────
+  async function callPostData() {
+    const name = document.getElementById('field-name').value.trim();
+    const message = document.getElementById('field-message').value.trim();
+    if (!name && !message) {
+      setOutput('post-output', 'Veuillez remplir au moins un champ.', 'err');
+      return;
+    }
+    setOutput('post-output', '⏳ Envoi en cours...', '');
+    try {
+      const res = await fetch(`${getUrl()}/data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, message })
+      });
+      const data = await res.json();
+      setOutput('post-output', JSON.stringify(data, null, 2));
+      // Rafraîchit la liste
+      callGetData();
+    } catch(e) {
+      setOutput('post-output', `Erreur : ${e.message}`, 'err');
+    }
+  }
+
+  // ── /poem ─────────────────────────────────────────────────────
+  async function callPoem() {
+    const theme = document.getElementById('poem-theme').value.trim() || 'la nature';
+    const out = document.getElementById('poem-output');
+    out.textContent = '✨ Le poème se compose...';
+    const btn = document.querySelector('[onclick="callPoem()"]');
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${getUrl()}/poem?theme=${encodeURIComponent(theme)}`);
+      const data = await res.json();
+      out.textContent = data.poem || data.error || 'Aucun poème généré.';
+    } catch(e) {
+      out.textContent = `Erreur : ${e.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Auto-ping toutes les 30s
+  pingStatus();
+  setInterval(pingStatus, 30000);
+</script>
+</body>
+</html>
