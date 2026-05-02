@@ -232,7 +232,7 @@ gcloud run deploy mini-frontend \
 
 ## 🔗 Liens
 
-- **API Cloud Run** : `https://mini-api-xxxx-uc.a.run.app`
+- **API Cloud Run** : https://mini-api-19533580976.us-central1.run.app
 - **Frontend Cloud Run** : `https://mini-frontend-xxxx-uc.a.run.app`
-- **Image Docker API** : `https://hub.docker.com/r/VOTRE_USER/mini-api`
+- **Image Docker API** : https://hub.docker.com/r/lucas97592/mini-api
 - **Image Docker Frontend** : `https://hub.docker.com/r/VOTRE_USER/mini-frontend`
