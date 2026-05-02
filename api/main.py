@@ -16,7 +16,7 @@ app = Flask(__name__)
 BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "mon-bucket-api")
 FILE_PATH = os.environ.get("GCS_FILE_PATH", "data/entries.json")
 GCP_PROJECT = os.environ.get("GCP_PROJECT_ID", "mon-projet-gcp")
-GCP_REGION = os.environ.get("GCP_REGION", "us-central1")
+GCP_REGION = os.environ.get("GCP_REGION", "europe-west1")
 
 
 def get_storage_client():
@@ -133,8 +133,8 @@ def get_poem():
         theme = request.args.get("theme", "la nature et le code informatique")
 
         # Initialise Vertex AI
-        vertexai.init(project=GCP_PROJECT, location=GCP_REGION)
-        model = GenerativeModel("gemini-1.5-flash")
+        vertexai.init(project=GCP_PROJECT, location="us-central1")
+        model = GenerativeModel("gemini-2.5-flash")
 
         prompt = f"""Écris un poème court et créatif (4 à 8 vers) sur le thème suivant : {theme}.
         Le poème doit être en français, poétique et inspirant."""
