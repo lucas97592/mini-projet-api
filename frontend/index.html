@@ -30,7 +30,7 @@
       padding: 2rem;
     }
 
-    /* ── Grain overlay ─────────────────────────────────── */
+
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -164,7 +164,7 @@
     .output.loaded { color: var(--text); }
     .output.err { color: var(--error); }
 
-    /* ── Poem box ───────────────────────────────────────── */
+
     .poem-output {
       background: linear-gradient(135deg, rgba(124,106,255,0.08), rgba(255,106,155,0.08));
       border: 1px solid var(--border);
@@ -178,7 +178,6 @@
       font-style: italic;
     }
 
-    /* ── Buttons ─────────────────────────────────────────── */
     .btn {
       display: inline-flex; align-items: center; gap: 0.4rem;
       padding: 0.55rem 1.1rem;
@@ -220,7 +219,6 @@
 
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* ── Form inputs ────────────────────────────────────── */
     .form-group { margin-bottom: 0.75rem; }
 
     label {
@@ -250,7 +248,7 @@
 
     textarea { resize: vertical; min-height: 80px; }
 
-    /* ── Entries table ──────────────────────────────────── */
+
     .entries-list {
       display: flex; flex-direction: column; gap: 0.5rem;
       max-height: 220px; overflow-y: auto;
@@ -279,7 +277,7 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── API URL config ─────────────────────────────────── */
+
     .config-bar {
       max-width: 900px;
       margin: 0 auto 1.5rem;
@@ -325,7 +323,6 @@
   </div>
 </header>
 
-<!-- Configuration de l'URL de l'API -->
 <div class="config-bar">
   <span class="config-label">API URL →</span>
   <input type="text" id="api-url" value="http://localhost:8080" placeholder="https://votre-api.run.app" />
@@ -334,7 +331,7 @@
 
 <div class="grid">
 
-  <!-- /hello -->
+
   <div class="card">
     <div class="card-tag"><span class="method">GET</span>/hello</div>
     <h2>Message de bienvenue</h2>
@@ -342,7 +339,7 @@
     <button class="btn btn-secondary" onclick="callHello()">Appeler /hello</button>
   </div>
 
-  <!-- /status -->
+
   <div class="card">
     <div class="card-tag"><span class="method">GET</span>/status</div>
     <h2>Statut du serveur</h2>
@@ -350,7 +347,7 @@
     <button class="btn btn-secondary" onclick="callStatus()">Appeler /status</button>
   </div>
 
-  <!-- /data GET -->
+
   <div class="card">
     <div class="card-tag"><span class="method">GET</span>/data</div>
     <h2>Lire les données GCS <span class="tag-count" id="entry-count">0</span></h2>
@@ -360,7 +357,6 @@
     <button class="btn btn-primary" onclick="callGetData()">Charger les données</button>
   </div>
 
-  <!-- /data POST -->
   <div class="card">
     <div class="card-tag"><span class="method post">POST</span>/data</div>
     <h2>Ajouter une entrée</h2>
@@ -376,7 +372,6 @@
     <button class="btn btn-primary" onclick="callPostData()">Envoyer</button>
   </div>
 
-  <!-- /poem -->
   <div class="card full">
     <div class="card-tag"><span class="method">GET</span>/poem</div>
     <h2>Générer un poème avec Vertex AI ✨</h2>
@@ -399,7 +394,6 @@
     el.className = `output ${state}`;
   }
 
-  // ── /hello ───────────────────────────────────────────────────
   async function callHello() {
     setOutput('hello-output', '⏳ Chargement...', '');
     try {
@@ -411,7 +405,6 @@
     }
   }
 
-  // ── /status ──────────────────────────────────────────────────
   async function callStatus() {
     setOutput('status-output', '⏳ Chargement...', '');
     try {
@@ -431,7 +424,6 @@
     } catch(e) { document.getElementById('server-time').textContent = 'erreur'; }
   }
 
-  // ── GET /data ─────────────────────────────────────────────────
   async function callGetData() {
     const list = document.getElementById('data-list');
     list.innerHTML = '<div class="output">⏳ Chargement depuis GCS...</div>';
@@ -456,7 +448,6 @@
     }
   }
 
-  // ── POST /data ────────────────────────────────────────────────
   async function callPostData() {
     const name = document.getElementById('field-name').value.trim();
     const message = document.getElementById('field-message').value.trim();
@@ -473,14 +464,12 @@
       });
       const data = await res.json();
       setOutput('post-output', JSON.stringify(data, null, 2));
-      // Rafraîchit la liste
       callGetData();
     } catch(e) {
       setOutput('post-output', `Erreur : ${e.message}`, 'err');
     }
   }
 
-  // ── /poem ─────────────────────────────────────────────────────
   async function callPoem() {
     const theme = document.getElementById('poem-theme').value.trim() || 'la nature';
     const out = document.getElementById('poem-output');
@@ -498,7 +487,6 @@
     }
   }
 
-  // Auto-ping toutes les 30s
   pingStatus();
   setInterval(pingStatus, 30000);
 </script>
