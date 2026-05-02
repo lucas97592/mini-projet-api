@@ -379,6 +379,10 @@
       <label>Thème du poème</label>
       <input type="text" id="poem-theme" value="la nature et le code informatique" placeholder="ex: le cloud et les étoiles" />
     </div>
+    <div class="form-group" style="max-width:400px">
+      <label>Langue du poème</label>
+      <input type="text" id="poem-lang" value="français" placeholder="ex: français, anglais, espagnol" />
+    </div>
     <div class="poem-output" id="poem-output">Votre poème apparaîtra ici...</div>
     <button class="btn btn-pink" onclick="callPoem()">Générer un poème 🎭</button>
   </div>
@@ -472,12 +476,13 @@
 
   async function callPoem() {
     const theme = document.getElementById('poem-theme').value.trim() || 'la nature';
+    const langue = document.getElementById('poem-lang').value.trim() || 'français';
     const out = document.getElementById('poem-output');
     out.textContent = '✨ Le poème se compose...';
     const btn = document.querySelector('[onclick="callPoem()"]');
     btn.disabled = true;
     try {
-      const res = await fetch(`${getUrl()}/poem?theme=${encodeURIComponent(theme)}`);
+      const res = await fetch(`${getUrl()}/poem?theme=${encodeURIComponent(theme)}&langue=${encodeURIComponent(langue)}`);
       const data = await res.json();
       out.textContent = data.poem || data.error || 'Aucun poème généré.';
     } catch(e) {

@@ -3,6 +3,7 @@ import json
 import csv
 import io
 from datetime import datetime
+from flask_cors import CORS
 
 from flask import Flask, jsonify, request
 from google.cloud import storage
@@ -11,6 +12,7 @@ from vertexai.generative_models import GenerativeModel
 import vertexai
 
 app = Flask(__name__)
+CORS(app)
 
 BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "mon-bucket-api")
 FILE_PATH = os.environ.get("GCS_FILE_PATH", "data/entries.json")
@@ -35,7 +37,7 @@ def hello():
     return jsonify({
         "message": "Bienvenue sur notre Mini API ! 🎉",
         "version": "1.0.0",
-        "endpoints": ["/hello", "/status", "/data", "/poem"]
+        "endpoints": ["/hello", "/status", "/health", "/data", "/poem"]
     })
 
 
@@ -48,7 +50,12 @@ def status():
         "timestamp": int(now.timestamp())
     })
 
-
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "ok",
+        "message": "API disponible"
+    })
 
 @app.route("/data", methods=["GET"])
 def get_data():
@@ -77,9 +84,12 @@ def post_data():
     try:
 
         new_entry = request.get_json()
-        if not new_entry:
-            return jsonify({"error": "Corps JSON manquant"}), 400
 
+        if not new_entry:
+            return jsonify({"error": "Aucune donnée reçue"}), 400
+
+        if "name" not in new_entry or "message" not in new_entry:
+            return jsonify({"error": "Les champs name et message sont obligatoires"}), 400
 
         new_entry["created_at"] = datetime.utcnow().isoformat()
 
@@ -115,13 +125,13 @@ def post_data():
 def get_poem():
     try:
 
-        theme = request.args.get("theme", "la nature et le code informatique")
+        langue = request.args.get("langue", "français")
+        theme = request.args.get("theme", "la nature")
+
+        prompt = f"Écris un poème court en {langue} sur le thème : {theme}."
 
         vertexai.init(project=GCP_PROJECT, location=GCP_REGION)
         model = GenerativeModel("gemini-2.5-flash")
-
-        prompt = f"""Écris un poème court et créatif (4 à 8 vers) sur le thème suivant : {theme}.
-        Le poème doit être en français, poétique et inspirant."""
 
         response = model.generate_content(prompt)
         poem_text = response.text
@@ -129,6 +139,7 @@ def get_poem():
         return jsonify({
             "poem": poem_text,
             "theme": theme,
+            "langue": langue,
             "generated_at": datetime.utcnow().isoformat()
         })
 
