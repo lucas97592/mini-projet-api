@@ -1,238 +1,131 @@
-# 🚀 Mini Projet API — Flask + GCP + Docker
+#  Mini Projet API — Flask + GCP + Docker
 
-Mini API Python déployée sur **Google Cloud Run**, avec lecture/écriture sur **GCS** et génération de poèmes via **Vertex AI (Gemini)**.
+
+Projet réalisé en groupe dans le cadre du cours, avec pour objectif de mettre en pratique la création d’une API simple en Python, l’utilisation de Docker, et le déploiement sur Google Cloud.
+
+L’API permet de manipuler des données stockées sur Google Cloud Storage et d’expérimenter la génération de texte avec Vertex AI.
 
 ---
 
-## 📁 Structure du projet
+##  Objectif
+
+Le but du projet est de comprendre comment :
+
+- créer une API avec Flask  
+- stocker des données sur GCS  
+- utiliser un service cloud (Vertex AI)  
+- dockeriser une application  
+- déployer sur Cloud Run  
+
+Le projet reste volontairement simple pour se concentrer sur ces aspects.
+
+---
+
+## ⚙️ Fonctionnalités
+
+- `GET /hello` → message de bienvenue  
+- `GET /status` → heure du serveur  
+- `GET /data` → lecture des données depuis GCS  
+- `POST /data` → ajout d’une entrée  
+- `GET /poem` → génération d’un poème (si Vertex AI activé)  
+
+---
+
+##  Structure du projet
 
 ```
 mini_projet/
 ├── api/
-│   ├── main.py            # Code Flask de l'API
-│   ├── requirements.txt   # Dépendances Python
-│   └── Dockerfile         # Image Docker de l'API
+│   ├── main.py
+│   ├── requirements.txt
+│   └── Dockerfile
 ├── frontend/
-│   ├── index.html         # Dashboard HTML/JS
-│   └── Dockerfile         # Image Docker Nginx
+│   ├── index.html
+│   └── Dockerfile
 └── README.md
 ```
 
 ---
 
-## ⚙️ Variables d'environnement
+##  Lancer en local
 
-| Variable | Description | Exemple |
-|---|---|---|
-| `GCS_BUCKET_NAME` | Nom de votre bucket GCS | `mon-bucket-api` |
-| `GCS_FILE_PATH` | Chemin du fichier JSON dans le bucket | `data/entries.json` |
-| `GCP_PROJECT_ID` | ID de votre projet GCP | `mon-projet-12345` |
-| `GCP_REGION` | Région GCP | `us-central1` |
+### 1. Se placer dans l’API
 
----
-
-## 🖥️ Exécution en local
-
-### Prérequis
-- Python 3.11+
-- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) installé et configuré
-- Un projet GCP avec un bucket GCS et Vertex AI activé
-
-### 1. Cloner le repo
-```bash
-git clone https://github.com/VOTRE_USER/mini-projet-api.git
-cd mini-projet-api/api
+```
+cd api
 ```
 
-### 2. Créer un environnement virtuel
-```bash
-python -m venv venv
-source venv/bin/activate        # Linux/Mac
-venv\Scripts\activate           # Windows
-```
+### 2. Installer les dépendances
 
-### 3. Installer les dépendances
-```bash
+```
 pip install -r requirements.txt
 ```
 
-### 4. Authentification GCP en local
-```bash
-# Authentification avec votre compte utilisateur
-gcloud auth application-default login
+### 3. Lancer l’API
 
-# OU via compte de service (fichier JSON)
-export GOOGLE_APPLICATION_CREDENTIALS="/chemin/vers/service-account.json"
 ```
-
-### 5. Définir les variables d'environnement
-```bash
-export GCS_BUCKET_NAME="mon-bucket-api"
-export GCS_FILE_PATH="data/entries.json"
-export GCP_PROJECT_ID="mon-projet-12345"
-export GCP_REGION="us-central1"
-```
-
-### 6. Lancer l'API
-```bash
 python main.py
 ```
 
-L'API est disponible sur : `http://localhost:8080`
+Accessible sur :
 
-### 7. Tester les endpoints
-```bash
-curl http://localhost:8080/hello
-curl http://localhost:8080/status
-curl http://localhost:8080/data
-curl -X POST http://localhost:8080/data \
-     -H "Content-Type: application/json" \
-     -d '{"name": "Alice", "message": "Test depuis local"}'
-curl http://localhost:8080/poem?theme=le+cloud
+```
+http://localhost:8080
 ```
 
 ---
 
-## 🐳 Build Docker
+##  Frontend
 
-### API
-```bash
-cd api/
+Un petit frontend HTML permet de tester les endpoints.
 
-# Build de l'image
+```
+cd frontend
+python -m http.server 3000
+```
+
+Puis ouvrir :
+
+```
+http://localhost:3000
+```
+
+---
+
+## ☁️ Utilisation de GCP
+
+Le projet utilise :
+
+- **Google Cloud Storage** pour stocker les données  
+- **Vertex AI** pour générer du texte  
+
+ Remarque :  
+La génération de poème peut ne pas fonctionner si la facturation GCP n’est pas activée.
+
+---
+
+## 🐳 Docker
+
+Build de l’API :
+
+```
+cd api
 docker build -t mini-api .
-
-# Lancer le conteneur en local
-docker run -p 8080:8080 \
-  -e GCS_BUCKET_NAME="mon-bucket-api" \
-  -e GCS_FILE_PATH="data/entries.json" \
-  -e GCP_PROJECT_ID="mon-projet-12345" \
-  -e GCP_REGION="us-central1" \
-  -e GOOGLE_APPLICATION_CREDENTIALS="/app/service-account.json" \
-  -v /chemin/local/service-account.json:/app/service-account.json \
-  mini-api
 ```
 
-### Frontend
-```bash
-cd frontend/
+Lancement :
 
-docker build -t mini-frontend .
-docker run -p 3000:80 mini-frontend
-# Frontend disponible sur http://localhost:3000
+```
+docker run -p 8080:8080 mini-api
 ```
 
 ---
 
-## ☁️ Déploiement sur Google Cloud Run
+## ⚠️ Limites
 
-### Étape 1 — Préparer GCP
-
-```bash
-# Définir votre projet
-export PROJECT_ID="mon-projet-12345"
-gcloud config set project $PROJECT_ID
-
-# Activer les APIs nécessaires
-gcloud services enable run.googleapis.com
-gcloud services enable storage.googleapis.com
-gcloud services enable aiplatform.googleapis.com
-gcloud services enable artifactregistry.googleapis.com
-```
-
-### Étape 2 — Créer un compte de service
-
-```bash
-# Créer le compte de service
-gcloud iam service-accounts create mini-api-sa \
-  --display-name="Mini API Service Account"
-
-# Lui donner les permissions nécessaires
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:mini-api-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/storage.objectAdmin"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:mini-api-sa@$PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/aiplatform.user"
-```
-
-### Étape 3 — Créer le bucket GCS
-
-```bash
-gsutil mb -p $PROJECT_ID gs://mon-bucket-api
-```
-
-### Étape 4 — Pousser l'image sur Docker Hub
-
-```bash
-# Connexion Docker Hub
-docker login
-
-# API
-cd api/
-docker build -t VOTRE_USER_DOCKERHUB/mini-api:latest .
-docker push VOTRE_USER_DOCKERHUB/mini-api:latest
-
-# Frontend
-cd ../frontend/
-docker build -t VOTRE_USER_DOCKERHUB/mini-frontend:latest .
-docker push VOTRE_USER_DOCKERHUB/mini-frontend:latest
-```
-
-### Étape 5 — Déployer l'API sur Cloud Run
-
-```bash
-gcloud run deploy mini-api \
-  --image VOTRE_USER_DOCKERHUB/mini-api:latest \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --service-account mini-api-sa@$PROJECT_ID.iam.gserviceaccount.com \
-  --set-env-vars GCS_BUCKET_NAME=mon-bucket-api,GCS_FILE_PATH=data/entries.json,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=us-central1
-```
-
-Notez l'URL retournée : `https://mini-api-xxxx-uc.a.run.app`
-
-### Étape 6 — Déployer le Frontend sur Cloud Run
-
-```bash
-gcloud run deploy mini-frontend \
-  --image VOTRE_USER_DOCKERHUB/mini-frontend:latest \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --port 80
-```
+- pas de gestion avancée des erreurs  
+- pas de système d’authentification  
+- stockage simple dans un fichier JSON  
+- dépendance à GCP pour certaines fonctionnalités  
 
 ---
-
-## 📡 Endpoints de l'API
-
-| Méthode | Endpoint | Description |
-|---|---|---|
-| GET | `/hello` | Message de bienvenue |
-| GET | `/status` | Date et heure du serveur |
-| GET | `/data` | Lit les entrées depuis GCS |
-| POST | `/data` | Ajoute une entrée dans GCS |
-| GET | `/poem?theme=xxx` | Génère un poème via Vertex AI |
-
----
-
-## 👥 Répartition des tâches
-
-| Membre | Contribution |
-|---|---|
-| **Prénom Nom 1** | Endpoints `/hello`, `/status` · Configuration Docker API |
-| **Prénom Nom 2** | Endpoints `/data` (GET + POST) · Intégration GCS |
-| **Prénom Nom 3** | Endpoint `/poem` · Intégration Vertex AI |
-| **Prénom Nom 4** | Frontend HTML/JS · Docker Frontend · Déploiement Cloud Run |
-
----
-
-## 🔗 Liens
-
-- **API Cloud Run** : https://mini-api-19533580976.us-central1.run.app
-- **Frontend Cloud Run** : `https://mini-frontend-xxxx-uc.a.run.app`
-- **Image Docker API** : https://hub.docker.com/r/lucas97592/mini-api
-- **Image Docker Frontend** : `https://hub.docker.com/r/VOTRE_USER/mini-frontend`
