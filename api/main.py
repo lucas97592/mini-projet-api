@@ -5,12 +5,14 @@ import io
 from datetime import datetime
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from google.cloud import storage
 from google.cloud import aiplatform
 from vertexai.generative_models import GenerativeModel
 import vertexai
 
 app = Flask(__name__)
+CORS(app)
 
 # --- Configuration via variables d'environnement ---
 BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "mon-bucket-api")
