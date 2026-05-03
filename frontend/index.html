@@ -464,7 +464,11 @@
     try {
       const res = await fetch(`${getUrl()}/poem?theme=${encodeURIComponent(theme)}&langue=${encodeURIComponent(langue)}`);
       const data = await res.json();
-      out.textContent = data.poem || data.error || 'Aucun poème généré.';
+      if (data.poem) {
+        out.textContent = data.poem;
+      } else {
+        out.textContent = "Poème indisponible (Vertex AI nécessite la facturation)";
+      }
     } catch(e) {
       out.textContent = `Erreur : ${e.message}`;
     } finally {
