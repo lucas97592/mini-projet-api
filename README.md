@@ -21,7 +21,7 @@ Le projet reste volontairement simple pour se concentrer sur ces aspects.
 
 ---
 
-## ⚙️ Fonctionnalités
+## Fonctionnalités
 
 - `GET /hello` → message de bienvenue  
 - `GET /status` → heure du serveur  
@@ -92,7 +92,7 @@ http://localhost:3000
 
 ---
 
-## ☁️ Utilisation de GCP
+## Utilisation de GCP
 
 Le projet utilise :
 
@@ -104,7 +104,7 @@ La génération de poème peut ne pas fonctionner si la facturation GCP n’est 
 
 ---
 
-## 🐳 Docker
+## Docker
 
 Build de l’API :
 
@@ -121,7 +121,7 @@ docker run -p 8080:8080 mini-api
 
 ---
 
-## ⚠️ Limites
+## Limites
 
 - pas de gestion avancée des erreurs  
 - pas de système d’authentification  
