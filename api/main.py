@@ -14,10 +14,10 @@ import vertexai
 app = Flask(__name__)
 CORS(app)
 
-BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "mon-bucket-api")
-FILE_PATH = os.environ.get("GCS_FILE_PATH", "data/entries.json")
-GCP_PROJECT = os.environ.get("GCP_PROJECT_ID", "mon-projet-gcp")
-GCP_REGION = os.environ.get("GCP_REGION", "europe-west1")
+bucket_name = os.environ.get("GCS_BUCKET_NAME", "mon-bucket-api")
+file_path = os.environ.get("GCS_FILE_PATH", "data/entries.json")
+project_id = os.environ.get("GCP_PROJECT_ID", "mon-projet-gcp")
+region = os.environ.get("GCP_REGION", "europe-west1")
 
 
 def get_storage_client():
@@ -28,7 +28,7 @@ def get_storage_client():
 def get_bucket():
     """Retourne le bucket GCS configuré."""
     client = get_storage_client()
-    return client.bucket(BUCKET_NAME)
+    return client.bucket(bucket_name)
 
 
 
@@ -43,11 +43,11 @@ def hello():
 
 @app.route("/status", methods=["GET"])
 def status():
-    now = datetime.utcnow()
+    t = datetime.utcnow()
     return jsonify({
         "status": "ok",
-        "server_time_utc": now.isoformat(),
-        "timestamp": int(now.timestamp())
+        "server_time_utc": t.isoformat(),
+        "timestamp": int(t.timestamp())
     })
 
 @app.route("/health", methods=["GET"])
@@ -61,18 +61,18 @@ def health():
 def get_data():
     try:
         bucket = get_bucket()
-        blob = bucket.blob(FILE_PATH)
+        blob = bucket.blob(file_path)
 
        
         if not blob.exists():
             return jsonify({"entries": [], "count": 0})
 
-        content = blob.download_as_text()
-        entries = json.loads(content)
+        txt = blob.download_as_text()
+        data = json.loads(txt)
 
         return jsonify({
-            "entries": entries,
-            "count": len(entries)
+            "entries": data,
+            "count": len(data)
         })
 
     except Exception as e:
@@ -94,26 +94,26 @@ def post_data():
         new_entry["created_at"] = datetime.utcnow().isoformat()
 
         bucket = get_bucket()
-        blob = bucket.blob(FILE_PATH)
+        blob = bucket.blob(file_path)
 
         if blob.exists():
-            content = blob.download_as_text()
-            entries = json.loads(content)
+            txt = blob.download_as_text()
+            data = json.loads(txt)
         else:
-            entries = []
+            data = []
 
-        entries.append(new_entry)
+        data.append(new_entry)
 
      
         blob.upload_from_string(
-            json.dumps(entries, indent=2, ensure_ascii=False),
+            json.dumps(data, indent=2, ensure_ascii=False),
             content_type="application/json"
         )
 
         return jsonify({
             "message": "Entrée ajoutée avec succès",
             "entry": new_entry,
-            "total_entries": len(entries)
+            "total_entries": len(data)
         }), 201
 
     except Exception as e:
@@ -130,11 +130,11 @@ def get_poem():
 
         prompt = f"Écris un poème court en {langue} sur le thème : {theme}."
 
-        vertexai.init(project=GCP_PROJECT, location=GCP_REGION)
-        model = GenerativeModel("gemini-2.5-flash")
+        vertexai.init(project=project_id, location=region)
+        m = GenerativeModel("gemini-2.5-flash")
 
-        response = model.generate_content(prompt)
-        poem_text = response.text
+        res = m.generate_content(prompt)
+        poem_text = res.text
 
         return jsonify({
             "poem": poem_text,
