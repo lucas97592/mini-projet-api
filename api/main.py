@@ -6,6 +6,7 @@ from datetime import datetime
 from flask_cors import CORS
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from google.cloud import storage
 from google.cloud import aiplatform
 from vertexai.generative_models import GenerativeModel
